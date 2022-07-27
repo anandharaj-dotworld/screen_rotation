@@ -1,5 +1,10 @@
 Function Set-ScreenResolutionAndOrientation { 
 
+    param (
+        [int] $Orientation,
+    )
+
+
 <# 
     .Synopsis 
         Sets the Screen Resolution of the primary monitor 
@@ -94,12 +99,20 @@ namespace Resolution
                 int temp = dm.dmPelsHeight;
                 dm.dmPelsHeight = dm.dmPelsWidth;
                 dm.dmPelsWidth = temp;
-
-                // determine new orientation based on the current orientation
-                switch(dm.dmDisplayOrientation)
-                 {
-                   case NativeMethods.DMDO_DEFAULT:
-                        
+                if $Orientation {
+                    if $Orientation -eq 0 {
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
+                    } elseif $Orientation -eq 1 {
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_90;
+                    } elseif $Orientation -eq 2 {
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_180;
+                    } elseif $Orientation -eq 3 {
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_270;
+                    }
+                } else {
+                    switch(dm.dmDisplayOrientation)
+                    {
+                    case NativeMethods.DMDO_DEFAULT: 
                         //2016-10-25/EBP wrap counter clockwise
                         dm.dmDisplayOrientation = NativeMethods.DMDO_90;
                         break;
@@ -116,8 +129,9 @@ namespace Resolution
                         // unknown orientation value
                         // add exception handling here
                        break;
-               }
-
+                    }
+                }
+                
 
                 int iRet = NativeMethods.ChangeDisplaySettings(ref dm, NativeMethods.CDS_TEST); 
 
