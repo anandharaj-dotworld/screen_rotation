@@ -1,20 +1,29 @@
-Function Set-ScreenResolutionAndOrientation { 
-
-    param (
-        [int] $Orientation,
-    )
-
+Param (
+    [Parameter (Mandatory=$true)]
+    [ValidateRange(0,3)]
+    [int]$Rotation
+)
 
 <# 
-    .Synopsis 
-        Sets the Screen Resolution of the primary monitor 
+    .Synopsis
+        Sets the Screen Resolution and orientation of the primary monitor 
+        Adapted from,
+        https://stackoverflow.com/questions/12644786/powershell-script-to-change-screen-orientation
+        https://blogs.technet.microsoft.com/heyscriptingguy/2010/07/07/hey-scripting-guy-how-can-i-change-my-desktop-monitor-resolution-via-windows-powershell/
     .Description 
-        Uses Pinvoke and ChangeDisplaySettings Win32API to make the change 
+        Uses Pinvoke and ChangeDisplaySettings Win32API to make the change
+        Windows API enumeration of display rotation is counter-clockwise
     .Example 
-        Set-ScreenResolutionAndOrientation         
-        
-    CMD: powershell.exe -ExecutionPolicy Bypass -File "%~dp0ChangeOrientation.ps1"
+        Powershell.exe -executionpolicy bypass -file ".\Set-OrientationAndResolution.ps1" 0
+
+            # Parameter: "Rotation" is desired rotation
+            #     0 = rotate 0   = landscape
+            #     1 = rotate 270 = portrait flipped
+            #     2 = rotate 180 = landscape flipped
+            #     3 = rotate 90  = portrait
 #>
+
+Function Set-ScreenResolutionAndOrientation ($r){
 
 $pinvokeCode = @" 
 
@@ -83,11 +92,9 @@ namespace Resolution
         public const int DMDO_270 = 3;
     } 
 
-
-
     public class PrmaryScreenResolution 
     { 
-        static public string ChangeResolution() 
+        static public string ChangeResolution(int rotation) 
         { 
 
             DEVMODE dm = GetDevMode(); 
@@ -96,31 +103,46 @@ namespace Resolution
             {
 
                 // swap width and height
-                int temp = dm.dmPelsHeight;
-                dm.dmPelsHeight = dm.dmPelsWidth;
-                dm.dmPelsWidth = temp;
-                
-                switch(dm.dmDisplayOrientation)
+                if (rotation == 1 || rotation == 3)
                 {
-                case NativeMethods.DMDO_DEFAULT: 
-                    //2016-10-25/EBP wrap counter clockwise
-                    dm.dmDisplayOrientation = NativeMethods.DMDO_90;
-                    break;
-                case NativeMethods.DMDO_270:
-                    dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
-                    break;
-                case NativeMethods.DMDO_180:
-                    dm.dmDisplayOrientation = NativeMethods.DMDO_270;
-                    break;
-                case NativeMethods.DMDO_90:
-                    dm.dmDisplayOrientation = NativeMethods.DMDO_180;
-                    break;
-                default:
-                    // unknown orientation value
-                    // add exception handling here
-                    break;
+                    if (dm.dmPelsWidth > dm.dmPelsHeight)
+                    {
+                        int temp = dm.dmPelsHeight;
+                        dm.dmPelsHeight = dm.dmPelsWidth;
+                        dm.dmPelsWidth = temp;
+                    }
                 }
                 
+                if (rotation == 0 || rotation == 2)
+                {
+                    if (dm.dmPelsWidth < dm.dmPelsHeight)
+                    {
+                        int temp = dm.dmPelsHeight;
+                        dm.dmPelsHeight = dm.dmPelsWidth;
+                        dm.dmPelsWidth = temp;
+                    }
+                }
+
+                // determine new orientation based on the current orientation
+                switch(rotation)
+                {
+                    case 1:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_270;
+                        break;
+                    case 2:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_180;
+                        break;
+                    case 3:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_90;
+                        break;
+                    case 0:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
+                        break;
+                    default:
+                        // unknown orientation value
+                        // add exception handling here
+                        break;
+                }
 
                 int iRet = NativeMethods.ChangeDisplaySettings(ref dm, NativeMethods.CDS_TEST); 
 
@@ -149,7 +171,6 @@ namespace Resolution
 
                 } 
 
-
             } 
             else 
             { 
@@ -171,7 +192,7 @@ namespace Resolution
 "@ 
 
 Add-Type $pinvokeCode -ErrorAction SilentlyContinue 
-[Resolution.PrmaryScreenResolution]::ChangeResolution() 
+[Resolution.PrmaryScreenResolution]::ChangeResolution($r) 
 }
 
-Set-ScreenResolutionAndOrientation
+Set-ScreenResolutionAndOrientation $Rotation
