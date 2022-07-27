@@ -94,49 +94,29 @@ namespace Resolution
                 int temp = dm.dmPelsHeight;
                 dm.dmPelsHeight = dm.dmPelsWidth;
                 dm.dmPelsWidth = temp;
-                $param1=$args[0]
-                swith($param1)
-                {
-                    case 0:
-                        dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
-                        break;
-                    case 1:
-                        dm.dmDisplayOrientation = NativeMethods.DMDO_90;
-                        break;
-                    case 2:
-                        dm.dmDisplayOrientation = NativeMethods.DMDO_180;
-                        break;
-                    case 3:
-                        dm.dmDisplayOrientation = NativeMethods.DMDO_270;
-                        break;
-                    default:
-                        // unknown orientation value
-                        // add exception handling here
-                        break;
-                }
 
                 // determine new orientation based on the current orientation
-                // switch(dm.dmDisplayOrientation)
-                // {
-                   // case NativeMethods.DMDO_DEFAULT:
-                        //
+                switch(dm.dmDisplayOrientation)
+                 {
+                   case NativeMethods.DMDO_DEFAULT:
+                        
                         //2016-10-25/EBP wrap counter clockwise
-                       // dm.dmDisplayOrientation = NativeMethods.DMDO_90;
-                       // break;
-                   // case NativeMethods.DMDO_270:
-                       // dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
-                      //  break;
-                   // case NativeMethods.DMDO_180:
-                      //  dm.dmDisplayOrientation = NativeMethods.DMDO_270;
-                      //  break;
-                   // case NativeMethods.DMDO_90:
-                       // dm.dmDisplayOrientation = NativeMethods.DMDO_180;
-                       // break;
-                  //  default:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_90;
+                        break;
+                    case NativeMethods.DMDO_270:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_DEFAULT;
+                        break;
+                    case NativeMethods.DMDO_180:
+                        dm.dmDisplayOrientation = NativeMethods.DMDO_270;
+                        break;
+                    case NativeMethods.DMDO_90:
+                       dm.dmDisplayOrientation = NativeMethods.DMDO_180;
+                       break;
+                   default:
                         // unknown orientation value
                         // add exception handling here
-                       // break;
-              // }
+                       break;
+               }
 
 
                 int iRet = NativeMethods.ChangeDisplaySettings(ref dm, NativeMethods.CDS_TEST); 
